@@ -1,4 +1,3 @@
-//DeadLock Resolution
 #include <stdio.h>
 #include <pthread.h>
 #include <unistd.h>
@@ -23,12 +22,12 @@ void init_account(Account *acc, char* name, double amount) {
 
 void* deposit(void* arg) {
    Account* acc = (Account*) arg;
-   double dep_amount = 20.0; // Example deposit amount
+   double dep_amount = 20.0;
 
    pthread_mutex_lock(&acc->lock);
    acc->amount += dep_amount;
    printf("Depositing $%.2f to %s's account...\n", dep_amount, acc->name);
-   sleep(2); // Simulating delay
+   sleep(2);
    printf("Updating balance...\n");
    sleep(1);
    printf("Transaction Complete!\n");
@@ -45,7 +44,7 @@ void* withdraw(void* arg) {
    pthread_mutex_lock(&acc->lock);
    acc->amount -= with_amount;
    printf("Withdrawing $%.2f from %s's account...\n", with_amount, acc->name);
-   sleep(2); // Simulating delay
+   sleep(2); 
    printf("Updating balance...\n");
    sleep(1);
    printf("Transaction Complete!\n");
@@ -59,6 +58,7 @@ void* transfer_acc1_to_acc2(void* args) {
     Account** acc = (Account**) args;
     Account* acc1 = acc[0];
     Account* acc2 = acc[1];
+    double amount = 50.0;
 
     // we have to lock acc 1 first before acc 2
     if (acc1->accountNumber < acc2->accountNumber) {
@@ -70,8 +70,9 @@ void* transfer_acc1_to_acc2(void* args) {
     }
 
     printf("Locked both accounts for transfer from %s to %s...\n", acc1->name, acc2->name);
-    acc1->amount -= 50;
-    acc2->amount += 50;
+    printf("Amount: $%.2f\n", amount);
+    acc1->amount -= amount;
+    acc2->amount += amount;
 
     //unlock is called
     pthread_mutex_unlock(&acc1->lock);
@@ -86,6 +87,7 @@ void* transfer_acc2_to_acc1(void* args) {
     Account** acc = (Account**) args;
     Account* acc1 = acc[0];
     Account* acc2 = acc[1];
+    double amount = 20.0;
 
     if (acc1->accountNumber < acc2->accountNumber) {
         pthread_mutex_lock(&acc1->lock);
@@ -96,8 +98,9 @@ void* transfer_acc2_to_acc1(void* args) {
     }
 
     printf("Locked both accounts for transfer from %s to %s...\n", acc2->name, acc1->name);
-    acc2->amount -= 20;
-    acc1->amount += 20;
+    printf("Amount: $%.2f\n", amount);
+    acc2->amount += amount;
+    acc1->amount -= amount;
 
     pthread_mutex_unlock(&acc1->lock);
     pthread_mutex_unlock(&acc2->lock);
@@ -117,8 +120,8 @@ int main() {
 
    pthread_t t1, t2;
 
-   Account* accounts1[] = {&acc1, &acc2};  // Transfer from acc1 to acc2
-   Account* accounts2[] = {&acc2, &acc1};  // Transfer from acc2 to acc1
+   Account* accounts1[] = {&acc1, &acc2};
+   Account* accounts2[] = {&acc2, &acc1};
 
    pthread_create(&t1, NULL, transfer_acc1_to_acc2, (void*)accounts1);
    pthread_create(&t2, NULL, transfer_acc2_to_acc1, (void*)accounts2);
@@ -129,7 +132,7 @@ int main() {
    printf("\n");
    show_balance(&acc1);
    show_balance(&acc2);
-    
+
    pthread_mutex_destroy(&acc1.lock);
    pthread_mutex_destroy(&acc2.lock);
 }
